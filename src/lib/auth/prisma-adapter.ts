@@ -1,17 +1,57 @@
+import { User } from '@prisma/client'
+import { NextApiRequest, NextApiResponse } from 'next'
 import { Adapter, AdapterAccount } from 'next-auth/adapters'
+import { destroyCookie, parseCookies } from 'nookies'
 import { prisma } from '../prisma'
 
 /** @return { import("next-auth/adapters").Adapter } */
-export function PrismaAdapter(): Adapter {
+export function PrismaAdapter(
+  req: NextApiRequest,
+  res: NextApiResponse,
+): Adapter {
   return {
-    async createUser(user) { },
+    async createUser(user: User) {
+      const { '@ignitecall:userId': userIdOnCookies } = parseCookies({ req })
+
+      if (!userIdOnCookies) {
+        throw new Error('User ID not found on cookies')
+      }
+
+      const prismaUser = await prisma.user.update({
+        where: {
+          id: userIdOnCookies,
+        },
+        data: {
+          name: user.name,
+          email: user.email,
+          avatar_url: user.avatar_url,
+        },
+      })
+
+      destroyCookie({ res }, '@ignitecall:userId', {
+        path: '/',
+      })
+
+      return {
+        id: prismaUser.id,
+        name: prismaUser.name,
+        email: prismaUser.email!,
+        username: prismaUser.username,
+        emailVerified: null,
+        avatar_url: prismaUser.avatar_url!,
+      }
+    },
 
     async getUser(id) {
-      const user = await prisma.user.findUniqueOrThrow({
+      const user = await prisma.user.findUnique({
         where: {
           id,
         },
       })
+
+      if (!user) {
+        return null
+      }
 
       return {
         id: user.id,
@@ -22,12 +62,17 @@ export function PrismaAdapter(): Adapter {
         avatar_url: user.avatar_url!,
       }
     },
+
     async getUserByEmail(email) {
-      const user = await prisma.user.findUniqueOrThrow({
+      const user = await prisma.user.findUnique({
         where: {
           email,
         },
       })
+
+      if (!user) {
+        return null
+      }
 
       return {
         id: user.id,
@@ -40,7 +85,7 @@ export function PrismaAdapter(): Adapter {
     },
 
     async getUserByAccount({ providerAccountId, provider }) {
-      const { user } = await prisma.account.findUniqueOrThrow({
+      const account = await prisma.account.findUnique({
         where: {
           provider_provider_account_id: {
             provider,
@@ -51,6 +96,12 @@ export function PrismaAdapter(): Adapter {
           user: true,
         },
       })
+
+      if (!account) {
+        return null
+      }
+
+      const { user } = account
 
       return {
         id: user.id,
@@ -113,7 +164,7 @@ export function PrismaAdapter(): Adapter {
     // async unlinkAccount({ providerAccountId, provider }) {},
 
     async createSession({ sessionToken, userId, expires }) {
-      const session = await prisma.session.create({
+      await prisma.session.create({
         data: {
           session_token: sessionToken,
           user_id: userId,
@@ -122,14 +173,14 @@ export function PrismaAdapter(): Adapter {
       })
 
       return {
-        sessionToken: session.session_token,
-        userId: session.user_id,
-        expires: session.expires,
+        sessionToken,
+        userId,
+        expires,
       }
     },
 
     async getSessionAndUser(sessionToken) {
-      const { user, ...session } = await prisma.session.findUniqueOrThrow({
+      const prismaSession = await prisma.session.findUnique({
         where: {
           session_token: sessionToken,
         },
@@ -137,6 +188,12 @@ export function PrismaAdapter(): Adapter {
           user: true,
         },
       })
+
+      if (!prismaSession) {
+        return null
+      }
+
+      const { user, ...session } = prismaSession
 
       return {
         session: {
@@ -173,7 +230,13 @@ export function PrismaAdapter(): Adapter {
       }
     },
 
-    // async deleteSession(sessionToken) {},
+    async deleteSession(sessionToken) {
+      await prisma.session.delete({
+        where: {
+          session_token: sessionToken,
+        },
+      })
+    },
 
     // async createVerificationToken({ identifier, expires, token }) {},
 
