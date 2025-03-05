@@ -1,8 +1,9 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 import { getServerSession } from 'next-auth'
 import { z } from 'zod'
-import { prisma } from '../../../lib/prisma'
 import { buildNextAuthOptions } from '../auth/[...nextauth].api'
+import { PrismaTimeIntervalsRepository } from './time-intervals/repositories/prisma-time-intervals.repository'
+import { CreateTimeIntervalsUseCase } from './time-intervals/use-cases/create-time-intervals'
 
 const timeIntervalsBodySchema = z.object({
   intervals: z.array(
@@ -34,21 +35,22 @@ export default async function handler(
 
   const { intervals } = timeIntervalsBodySchema.parse(req.body)
 
-  await Promise.all(
-    intervals.map((interval) => {
-      return prisma.userTimeInterval.create({
-        data: {
-          week_day: interval.weekDay,
-          time_start_in_minutes: interval.startTimeInMinutes,
-          time_end_in_minutes: interval.endTimeInMinutes,
-          user_id: session.user.id,
-        },
-      })
-    }),
+  const timeIntervalsRepository = new PrismaTimeIntervalsRepository()
+  const createTimeIntervals = new CreateTimeIntervalsUseCase(
+    timeIntervalsRepository,
   )
 
-  // TODO: Create user time intervals using createMany when move out from sqlite
-  // await prisma.userTimeInterval.createMany
+  console.log("cxnzbcxnzbcxznbncxz", intervals)
 
-  return res.status(201).end()
+  try {
+    await createTimeIntervals.execute({
+      intervals,
+      userId: session.user.id,
+    })
+
+    return res.status(201).end()
+  } catch (error) {
+    console.error(error)
+    return res.status(400).json({ message: 'Error creating time intervals' })
+  }
 }
