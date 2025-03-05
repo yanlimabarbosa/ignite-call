@@ -1,8 +1,9 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 import { getServerSession } from 'next-auth'
 import { z } from 'zod'
-import { prisma } from '../../../../lib/prisma'
 import { buildNextAuthOptions } from '../../auth/[...nextauth].api'
+import { PrismaProfileRepository } from './repositories/prisma-profile.repository'
+import { UpdateProfileUseCase } from './use-cases/update-profile'
 
 const updateProfileBodySchema = z.object({
   bio: z.string()
@@ -29,12 +30,12 @@ export default async function handler(
   const { bio } = updateProfileBodySchema.parse(req.body)
 
   try {
-    await prisma.user.update({
-      where: {
-        id: session.user.id
-      }, data: {
-        bio
-      }
+    const profileRepository = new PrismaProfileRepository()
+    const updateProfile = new UpdateProfileUseCase(profileRepository)
+
+    await updateProfile.execute({
+      userId: session.user.id,
+      bio,
     })
 
     return res.status(204).end()
