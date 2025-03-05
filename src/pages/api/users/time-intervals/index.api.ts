@@ -1,9 +1,9 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 import { getServerSession } from 'next-auth'
 import { z } from 'zod'
-import { buildNextAuthOptions } from '../auth/[...nextauth].api'
-import { PrismaTimeIntervalsRepository } from './time-intervals/repositories/prisma-time-intervals.repository'
-import { CreateTimeIntervalsUseCase } from './time-intervals/use-cases/create-time-intervals'
+import { buildNextAuthOptions } from '../../auth/[...nextauth].api'
+import { PrismaTimeIntervalsRepository } from './repositories/prisma-time-intervals.repository'
+import { CreateTimeIntervalsUseCase } from './use-cases/create-time-intervals'
 
 const timeIntervalsBodySchema = z.object({
   intervals: z.array(
@@ -39,8 +39,6 @@ export default async function handler(
   const createTimeIntervals = new CreateTimeIntervalsUseCase(
     timeIntervalsRepository,
   )
-
-  console.log("cxnzbcxnzbcxznbncxz", intervals)
 
   try {
     await createTimeIntervals.execute({
