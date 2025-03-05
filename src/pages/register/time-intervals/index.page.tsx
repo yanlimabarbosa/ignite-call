@@ -9,7 +9,7 @@ import {
 } from '@ignite-ui/react'
 import { ArrowRight } from 'phosphor-react'
 import { Controller, useFieldArray, useForm } from 'react-hook-form'
-import { TimeIntervalsService } from '../../../services/time-intervals.service'
+import { TimeIntervalsService } from '../../../services/time-intervals/time-intervals.service'
 import { getWeekDays } from '../../../utils/get-week-days'
 import { Container, Header } from '../styles'
 import { formDefaultValues } from './constants/form-default-values'
@@ -42,13 +42,15 @@ export default function TimeIntervals() {
     name: 'intervals',
   })
 
-  async function handleSetTimeIntervals(data: TimeIntervalsFormOutput) {
-    const timeIntervalsService = new TimeIntervalsService()
-    await timeIntervalsService.create({ intervals: data.intervals })
-  }
-
   const weekDays = getWeekDays()
   const intervals = watch('intervals')
+
+  async function handleSetTimeIntervals(data: TimeIntervalsFormOutput) {
+    const timeIntervalsService = new TimeIntervalsService()
+    await timeIntervalsService.create({
+      intervals: data.intervals,
+    })
+  }
 
   return (
     <Container>
