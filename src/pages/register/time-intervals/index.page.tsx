@@ -9,11 +9,11 @@ import {
 } from '@ignite-ui/react'
 import { ArrowRight } from 'phosphor-react'
 import { Controller, useFieldArray, useForm } from 'react-hook-form'
-import { z } from 'zod'
-import { api } from '../../../lib/axios'
-import { convertTimeStringToMinutes } from '../../../utils/convert-time-string-to-minutes'
+import { TimeIntervalsService } from '../../../services/time-intervals.service'
 import { getWeekDays } from '../../../utils/get-week-days'
 import { Container, Header } from '../styles'
+import { formDefaultValues } from './constants/form-default-values'
+import { timeIntervalsFormSchema } from './schemas/time-intervals-form-schema'
 import {
   FormError,
   IntervalBox,
@@ -22,48 +22,10 @@ import {
   IntervalInputs,
   IntervalItem,
 } from './styles'
-
-const timeIntervalsFormSchema = z.object({
-  intervals: z
-    .array(
-      z.object({
-        weekDay: z.number().min(0).max(6),
-        enabled: z.boolean(),
-        startTime: z.string(),
-        endTime: z.string(),
-      }),
-    )
-    .length(7)
-    .transform((intervals) => intervals.filter((interval) => interval.enabled))
-    .refine((intervals) => intervals.length > 0, {
-      message: 'Você precisa selecionar pelo menos um dia da semana',
-    })
-    .transform((intervals) => {
-      return intervals.map((interval) => {
-        return {
-          weekDay: interval.weekDay,
-          startTimeInMinutes: convertTimeStringToMinutes(interval.startTime),
-          endTimeInMinutes: convertTimeStringToMinutes(interval.endTime),
-        }
-      })
-    })
-    .refine(
-      (intervals) => {
-        return intervals.every((interval) => {
-          return interval.endTimeInMinutes - 60 >= interval.startTimeInMinutes
-        })
-      },
-      {
-        message:
-          'O horário de término deve ser pelo menos 1h distante do horário de início.',
-      },
-    ),
-})
+import { TimeIntervalsFormInput } from './types/time-intervals-form-input'
+import { TimeIntervalsFormOutput } from './types/time-intervals-form-output'
 
 export default function TimeIntervals() {
-  type TimeIntervalsFormInput = z.input<typeof timeIntervalsFormSchema>
-  type TimeIntervalsFormOutput = z.output<typeof timeIntervalsFormSchema>
-
   const {
     register,
     handleSubmit,
@@ -72,20 +34,8 @@ export default function TimeIntervals() {
     formState: { isSubmitting, errors },
   } = useForm<TimeIntervalsFormInput, unknown, TimeIntervalsFormOutput>({
     resolver: zodResolver(timeIntervalsFormSchema),
-    defaultValues: {
-      intervals: [
-        { weekDay: 0, enabled: false, startTime: '00:00', endTime: '18:00' },
-        { weekDay: 1, enabled: true, startTime: '00:00', endTime: '18:00' },
-        { weekDay: 2, enabled: true, startTime: '00:00', endTime: '18:00' },
-        { weekDay: 3, enabled: true, startTime: '00:00', endTime: '18:00' },
-        { weekDay: 4, enabled: true, startTime: '00:00', endTime: '18:00' },
-        { weekDay: 5, enabled: true, startTime: '00:00', endTime: '18:00' },
-        { weekDay: 6, enabled: false, startTime: '00:00', endTime: '18:00' },
-      ],
-    },
+    defaultValues: formDefaultValues,
   })
-
-  const weekDays = getWeekDays()
 
   const { fields } = useFieldArray({
     control,
@@ -93,11 +43,11 @@ export default function TimeIntervals() {
   })
 
   async function handleSetTimeIntervals(data: TimeIntervalsFormOutput) {
-    await api.post('/users/time-intervals', {
-      intervals: data.intervals,
-    })
+    const timeIntervalsService = new TimeIntervalsService()
+    await timeIntervalsService.create({ intervals: data.intervals })
   }
 
+  const weekDays = getWeekDays()
   const intervals = watch('intervals')
 
   return (
