@@ -6,4 +6,4 @@ export interface TimeInterval {
 
 export interface CreateTimeIntervalsRequest {
   intervals: TimeInterval[]
-} 
+}

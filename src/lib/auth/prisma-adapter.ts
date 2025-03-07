@@ -6,8 +6,8 @@ import { prisma } from '../prisma'
 
 /** @return { import("next-auth/adapters").Adapter } */
 export function PrismaAdapter(
-  req: NextApiRequest | NextPageContext["req"],
-  res: NextApiResponse | NextPageContext["res"],
+  req: NextApiRequest | NextPageContext['req'],
+  res: NextApiResponse | NextPageContext['res'],
 ): Adapter {
   return {
     async createUser(user: User) {

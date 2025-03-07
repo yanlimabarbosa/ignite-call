@@ -6,7 +6,7 @@ interface UpdateProfileRequest {
 }
 
 export class UpdateProfileUseCase {
-  constructor(private readonly profileRepository: IProfileRepository) { }
+  constructor(private readonly profileRepository: IProfileRepository) {}
 
   async execute({ userId, bio }: UpdateProfileRequest): Promise<void> {
     if (!bio.trim()) {
@@ -18,4 +18,4 @@ export class UpdateProfileUseCase {
       bio,
     })
   }
-} 
+}

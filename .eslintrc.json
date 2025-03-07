@@ -3,5 +3,7 @@
     "@rocketseat/eslint-config/react",
     "next/core-web-vitals"
   ],
-  "@typescript-eslint/no-useless-constructor": "off"
+  "rules": {
+    "@typescript-eslint/no-useless-constructor": "off"
+  }
 }

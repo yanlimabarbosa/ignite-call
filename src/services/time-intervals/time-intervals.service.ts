@@ -5,4 +5,4 @@ export class TimeIntervalsService {
   async create(request: CreateTimeIntervalsRequest) {
     await api.post('/users/time-intervals', request)
   }
-} 
+}

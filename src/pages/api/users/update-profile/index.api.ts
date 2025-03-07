@@ -6,7 +6,7 @@ import { PrismaProfileRepository } from './repositories/prisma-profile.repositor
 import { UpdateProfileUseCase } from './use-cases/update-profile'
 
 const updateProfileBodySchema = z.object({
-  bio: z.string()
+  bio: z.string(),
 })
 
 export default async function handler(

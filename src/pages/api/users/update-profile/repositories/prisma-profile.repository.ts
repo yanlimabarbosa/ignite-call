@@ -20,4 +20,4 @@ export class PrismaProfileRepository implements IProfileRepository {
       },
     })
   }
-} 
+}

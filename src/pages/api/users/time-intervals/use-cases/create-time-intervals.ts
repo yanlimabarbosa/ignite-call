@@ -12,7 +12,9 @@ interface CreateTimeIntervalsRequest {
 }
 
 export class CreateTimeIntervalsUseCase {
-  constructor(private readonly timeIntervalsRepository: ITimeIntervalsRepository) { }
+  constructor(
+    private readonly timeIntervalsRepository: ITimeIntervalsRepository,
+  ) {}
 
   async execute({
     intervals,
