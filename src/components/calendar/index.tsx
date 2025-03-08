@@ -11,7 +11,12 @@ import {
   CalendarTitle,
 } from './styles'
 
-export function Calendar() {
+interface CalendarProps {
+  selectedDate?: Date | null
+  onDateSelected: (date: Date) => void
+}
+
+export function Calendar({ selectedDate, onDateSelected }: CalendarProps) {
   const [currentDate, setCurrentDate] = useState(() => dayjs().set('date', 1))
   const shortWeekDays = getWeekDays({ short: true })
 
@@ -30,7 +35,9 @@ export function Calendar() {
       const date = firstDay.subtract(firstDay.day() - i, 'day')
       return {
         date,
-        disabled: date.month() !== currentDate.month(),
+        disabled:
+          date.month() !== currentDate.month() ||
+          date.endOf('day').isBefore(new Date()),
       }
     })
 
@@ -77,7 +84,10 @@ export function Calendar() {
             <tr key={week}>
               {days.map(({ date, disabled }) => (
                 <td key={date.toISOString()}>
-                  <CalendarDay disabled={disabled}>
+                  <CalendarDay
+                    onClick={() => onDateSelected(date.toDate())}
+                    disabled={disabled}
+                  >
                     {date.get('date')}
                   </CalendarDay>
                 </td>
